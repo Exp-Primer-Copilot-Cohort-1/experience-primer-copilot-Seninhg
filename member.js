@@ -1,9 +1,9 @@
-function skillMember(){
+function skillsMember(){
     return {
-        retrict: 'E',
-        templateUrl: 'views/skill-member.html',
-        controller: 'skillMemberCtrl',
-        controllerAs: 'skillMemberCtrl',
+        restrict: 'E',
+        templateUrl: 'modules/skills/views/member.html',
+        controller: 'SkillsMemberController',
+        controllerAs: 'vm',
         bindToController: true,
         scope: {
             member: '='
