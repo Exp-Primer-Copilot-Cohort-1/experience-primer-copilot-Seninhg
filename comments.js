@@ -1,100 +1,39 @@
-//create web server
-const express = require('express');
-const app = express();
-const bodyParser = require('body-parser');
-const port = 3000;
-const fs = require('fs');
+//Create web server
+var express = require('express');
+var router = express.Router();
+var bodyParser = require('body-parser');
+var fs = require('fs');
+var path = require('path');
 
-// Parse JSON bodies (as sent by API clients)
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
+var app = express();
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, 'public')));
 
-//get all comments
-app.get('/api/comments', (req, res) => {
-    fs.readFile('./data/comments.json', 'utf-8', (err, data) => {
-        if (err) {
-            return res.status(404).send({
-                message: err.message
-            });
-        }
-        const json = JSON.parse(data);
-        res.send(json);
-    });
+//Get the comments from the json file
+app.get('/comments', function(req, res) {
+  console.log("GET From SERVER");
+  fs.readFile('comments.json', function(err, data) {
+    res.setHeader('Cache-Control', 'no-cache');
+    res.json(JSON.parse(data));
+  });
 });
 
-//get comments by id
-app.get('/api/comments/:id', (req, res) => {
-    const id = req.params.id;
-    fs.readFile('./data/comments.json', 'utf-8', (err, data) => {
-        if (err) {
-            return res.status(404).send({
-                message: err.message
-            });
-        }
-        const json = JSON.parse(data);
-        const comment = json.find((comment) => comment.id === parseInt(id));
-        if (comment) {
-            res.send(comment);
-        } else {
-            res.status(404).send({
-                message: `comment with id ${id} not found`
-            });
-        }
+//Add a new comment to the json file
+app.post('/comments', function(req, res) {
+  fs.readFile('comments.json', function(err, data) {
+    var comments = JSON.parse(data);
+    comments.push(req.body);
+    fs.writeFile('comments.json', JSON.stringify(comments, null, 4), function(err) {
+      res.setHeader('Cache-Control', 'no-cache');
+      res.json(comments);
     });
+  });
 });
 
-//create a new comment
-app.post('/api/comments', (req, res) => {
-    const comment = req.body;
-    fs.readFile('./data/comments.json', 'utf-8', (err, data) => {
-        if (err) {
-            return res.status(404).send({
-                message: err.message
-            });
-        }
-        const json = JSON.parse(data);
-        json.push(comment);
-        fs.writeFile('./data/comments.json', JSON.stringify(json), (err) => {
-            if (err) {
-                return res.status(404).send({
-                    message: err.message
-                });
-            }
-            res.send(comment);
-        });
-    });
+//Start the server
+app.listen(3000, function() {
+  console.log("Server running on port 3000");
 });
 
-//update comment by id
-app.put('/api/comments/:id', (req, res) => {
-    const id = req.params.id;
-    const comment = req.body;
-    fs.readFile('./data/comments.json', 'utf-8', (err, data) => {
-        if (err) {
-            return res.status(404).send({
-                message: err.message
-            });
-        }
-        const json = JSON.parse(data);
-        const index = json.findIndex((comment) => comment.id === parseInt(id));
-        if (index !== -1) {
-            json[index] = comment;
-            fs.writeFile('./data/comments.json', JSON.stringify(json), (err) => {
-                if (err) {
-                    return res.status(404).send({
-                        message: err.message
-                    });
-                }
-                res.send(comment);
-            });
-        } else {
-            res.status(404).send({
-                message: `comment with id ${id} not found`
-            });
-        }
-    }
-    );
-}   
-);
-
+module.exports = router;
